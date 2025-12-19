@@ -622,17 +622,68 @@ func (e *engine) Remove(selector Selector, opts RemoveOptions) error {
 			WithHint("Unlock the workspace first", "yagwt unlock "+ws.Name)
 	}
 
-	// Check if dirty
+	// Handle dirty workspace based on strategy
 	onDirty := opts.OnDirty
 	if onDirty == "" {
 		onDirty = "fail"
 	}
 
-	if ws.Status.Dirty && onDirty == "fail" {
-		return NewError(ErrDirty, "workspace has uncommitted changes").
-			WithDetail("id", ws.ID).
-			WithDetail("name", ws.Name).
-			WithHint("Commit or stash changes, or use --on-dirty=force", "git -C "+ws.Path+" status")
+	if ws.Status.Dirty {
+		switch onDirty {
+		case "fail":
+			return NewError(ErrDirty, "workspace has uncommitted changes").
+				WithDetail("id", ws.ID).
+				WithDetail("name", ws.Name).
+				WithHint("Commit or stash changes, or use --on-dirty=stash|patch|wip-commit|force", "git -C "+ws.Path+" status")
+
+		case "stash":
+			// Stash changes before removal
+			stashMsg := "yagwt: auto-stash before removal of " + ws.Name
+			if err := e.repo.Stash(ws.Path, stashMsg); err != nil {
+				return WrapError(ErrGit, "failed to stash changes", err).
+					WithDetail("id", ws.ID).
+					WithDetail("name", ws.Name).
+					WithHint("Use --on-dirty=force to remove anyway", "")
+			}
+
+		case "patch":
+			// Create patch file before removal
+			patchDir := opts.PatchDir
+			if patchDir == "" {
+				patchDir = filepath.Join(e.repo.GitDir(), "yagwt", "patches")
+			}
+			patchFile := filepath.Join(patchDir, ws.Name+".patch")
+
+			if err := e.repo.CreatePatch(ws.Path, patchFile); err != nil {
+				return WrapError(ErrGit, "failed to create patch", err).
+					WithDetail("id", ws.ID).
+					WithDetail("name", ws.Name).
+					WithDetail("patchFile", patchFile).
+					WithHint("Use --on-dirty=force to remove anyway", "")
+			}
+
+		case "wip-commit":
+			// Create WIP commit before removal
+			wipMsg := opts.WipMessage
+			if wipMsg == "" {
+				wipMsg = "WIP: auto-commit before removal"
+			}
+
+			if err := e.repo.CreateWIPCommit(ws.Path, wipMsg); err != nil {
+				return WrapError(ErrGit, "failed to create WIP commit", err).
+					WithDetail("id", ws.ID).
+					WithDetail("name", ws.Name).
+					WithHint("Use --on-dirty=force to remove anyway", "")
+			}
+
+		case "force":
+			// Continue with removal (will use force flag below)
+
+		default:
+			return NewError(ErrConfig, "invalid on-dirty strategy").
+				WithDetail("strategy", onDirty).
+				WithHint("Valid strategies: fail, stash, patch, wip-commit, force", "")
+		}
 	}
 
 	// Remove git worktree

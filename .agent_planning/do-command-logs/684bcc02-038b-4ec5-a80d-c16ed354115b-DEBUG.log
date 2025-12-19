@@ -3174,3 +3174,15 @@
 2025-12-18T17:34:25.952319 init.py: directory exists: .agent_planning/do-command-logs
 2025-12-18T17:34:25.952410 init.py: directory exists: .agent_planning/do-command-logs/partials
 2025-12-18T17:34:25.952479 init.py: initialization complete
+2025-12-18T17:54:27.667411 ------------------------------------------------------------
+2025-12-18T17:54:27.667672 aggregate-exec.py: STOP HOOK TRIGGERED
+2025-12-18T17:54:27.667955 aggregate-exec.py: session_id=684bcc02-038b-4ec5-a80d-c16ed354115b
+2025-12-18T17:54:27.668111 aggregate-exec.py: cwd=/Users/bmf/code/yagwt-cli
+2025-12-18T17:54:27.668241 aggregate-exec.py: hook_input keys=['session_id', 'transcript_path', 'cwd', 'permission_mode', 'hook_event_name', 'stop_hook_active']
+2025-12-18T17:54:27.668328 aggregate-exec.py: hook_event_name=Stop
+2025-12-18T17:54:27.668416 aggregate-exec.py: permission_mode=bypassPermissions
+2025-12-18T17:54:27.668530 aggregate-exec.py: stop_hook_active=False
+2025-12-18T17:54:27.668646 aggregate-exec.py: checking partials_dir=.agent_planning/do-command-logs/partials
+2025-12-18T17:54:27.668741 aggregate-exec.py: scanning for partial files...
+2025-12-18T17:54:27.669092 aggregate-exec.py: found 0 files matching *-PARTIAL-*.txt
+2025-12-18T17:54:27.669212 aggregate-exec.py: no partial files, nothing to aggregate

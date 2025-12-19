@@ -3,6 +3,7 @@ package git
 import (
 	"bufio"
 	"bytes"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -24,6 +25,11 @@ type Repository interface {
 	// Reference operations
 	ResolveRef(ref string) (string, error) // Returns full SHA
 	GetBranch(ref string) (Branch, error)
+
+	// Dirty workspace operations
+	Stash(path, message string) error
+	CreatePatch(path, patchFile string) error
+	CreateWIPCommit(path, message string) error
 
 	// Repository info
 	Root() string
@@ -389,6 +395,86 @@ func (r *repo) GetBranch(ref string) (Branch, error) {
 	}
 
 	return branch, nil
+}
+
+// Stash creates a stash with a message
+func (r *repo) Stash(path, message string) error {
+	cmd := exec.Command("git", "-C", path, "stash", "push", "-m", message)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		errMsg := stderr.String()
+		return errors.WrapError(errors.ErrGit, "failed to stash changes", err).
+			WithDetail("path", path).
+			WithDetail("message", message).
+			WithDetail("stderr", errMsg)
+	}
+
+	return nil
+}
+
+// CreatePatch creates a patch file with all uncommitted changes
+func (r *repo) CreatePatch(path, patchFile string) error {
+	// Create patch directory if it doesn't exist
+	patchDir := filepath.Dir(patchFile)
+	if err := os.MkdirAll(patchDir, 0755); err != nil {
+		return errors.WrapError(errors.ErrGit, "failed to create patch directory", err).
+			WithDetail("dir", patchDir)
+	}
+
+	// Create the patch file
+	file, err := os.Create(patchFile)
+	if err != nil {
+		return errors.WrapError(errors.ErrGit, "failed to create patch file", err).
+			WithDetail("file", patchFile)
+	}
+	defer file.Close()
+
+	// Get diff for unstaged changes
+	cmd := exec.Command("git", "-C", path, "diff", "HEAD")
+	output, err := cmd.Output()
+	if err != nil {
+		return errors.WrapError(errors.ErrGit, "failed to generate diff", err).
+			WithDetail("path", path)
+	}
+
+	if _, err := file.Write(output); err != nil {
+		return errors.WrapError(errors.ErrGit, "failed to write patch", err).
+			WithDetail("file", patchFile)
+	}
+
+	return nil
+}
+
+// CreateWIPCommit creates a WIP commit with all changes
+func (r *repo) CreateWIPCommit(path, message string) error {
+	// Add all changes
+	cmd := exec.Command("git", "-C", path, "add", "-A")
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		errMsg := stderr.String()
+		return errors.WrapError(errors.ErrGit, "failed to add changes", err).
+			WithDetail("path", path).
+			WithDetail("stderr", errMsg)
+	}
+
+	// Create commit
+	cmd = exec.Command("git", "-C", path, "commit", "-m", message)
+	stderr.Reset()
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		errMsg := stderr.String()
+		return errors.WrapError(errors.ErrGit, "failed to create WIP commit", err).
+			WithDetail("path", path).
+			WithDetail("message", message).
+			WithDetail("stderr", errMsg)
+	}
+
+	return nil
 }
 
 // Root returns the repository root
