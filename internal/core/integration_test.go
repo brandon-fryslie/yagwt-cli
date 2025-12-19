@@ -140,6 +140,7 @@ func TestCreateWorkspace(t *testing.T) {
 	opts := core.CreateOptions{
 		Target: "feature-test",
 		Name:   "my-feature",
+		Dir:    filepath.Join(repoDir, ".workspaces", "my-feature"),
 	}
 
 	ws, err := engine.Create(opts)
@@ -197,6 +198,7 @@ func TestCreateEphemeralWorkspace(t *testing.T) {
 	opts := core.CreateOptions{
 		Target:    "feature-test",
 		Name:      "ephemeral-ws",
+		Dir:    filepath.Join(repoDir, ".workspaces", "ephemeral-ws"),
 		Ephemeral: true,
 		TTL:       7 * 24 * time.Hour,
 	}
@@ -240,6 +242,7 @@ func TestGetWorkspace(t *testing.T) {
 	created, err := engine.Create(core.CreateOptions{
 		Target: "feature-test",
 		Name:   "test-workspace",
+		Dir:    filepath.Join(repoDir, ".workspaces", "test-workspace"),
 	})
 	if err != nil {
 		t.Fatalf("Create() failed: %v", err)
@@ -304,6 +307,7 @@ func TestResolveWorkspaces(t *testing.T) {
 	ws1, err := engine.Create(core.CreateOptions{
 		Target: "feature-test",
 		Name:   "workspace-1",
+		Dir:    filepath.Join(repoDir, ".workspaces", "workspace-1"),
 	})
 	if err != nil {
 		t.Fatalf("Create() failed: %v", err)
@@ -346,6 +350,7 @@ func TestRemoveWorkspace(t *testing.T) {
 	ws, err := engine.Create(core.CreateOptions{
 		Target: "feature-test",
 		Name:   "to-remove",
+		Dir:    filepath.Join(repoDir, ".workspaces", "to-remove"),
 	})
 	if err != nil {
 		t.Fatalf("Create() failed: %v", err)
@@ -393,6 +398,7 @@ func TestRemovePinnedWorkspace(t *testing.T) {
 	ws, err := engine.Create(core.CreateOptions{
 		Target: "feature-test",
 		Name:   "pinned-ws",
+		Dir:    filepath.Join(repoDir, ".workspaces", "pinned-ws"),
 		Pin:    true,
 	})
 	if err != nil {
@@ -431,6 +437,7 @@ func TestPinUnpinWorkspace(t *testing.T) {
 	ws, err := engine.Create(core.CreateOptions{
 		Target: "feature-test",
 		Name:   "test-pin",
+		Dir:    filepath.Join(repoDir, ".workspaces", "test-pin"),
 	})
 	if err != nil {
 		t.Fatalf("Create() failed: %v", err)
@@ -482,6 +489,7 @@ func TestRenameWorkspace(t *testing.T) {
 	ws, err := engine.Create(core.CreateOptions{
 		Target: "feature-test",
 		Name:   "old-name",
+		Dir:    filepath.Join(repoDir, ".workspaces", "old-name"),
 	})
 	if err != nil {
 		t.Fatalf("Create() failed: %v", err)
@@ -532,6 +540,7 @@ func TestLockUnlockWorkspace(t *testing.T) {
 	ws, err := engine.Create(core.CreateOptions{
 		Target: "feature-test",
 		Name:   "test-lock",
+		Dir:    filepath.Join(repoDir, ".workspaces", "test-lock"),
 	})
 	if err != nil {
 		t.Fatalf("Create() failed: %v", err)
