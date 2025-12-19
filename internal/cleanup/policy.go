@@ -2,14 +2,48 @@ package cleanup
 
 import (
 	"time"
-
-	"github.com/bmf/yagwt/internal/core"
 )
+
+// Workspace represents a workspace for cleanup evaluation
+// This is a minimal interface to avoid import cycles
+type Workspace interface {
+	GetID() string
+	GetName() string
+	GetFlags() Flags
+	GetEphemeral() *EphemeralInfo
+	GetActivity() Activity
+	GetStatus() Status
+}
+
+// Flags represents workspace flags
+type Flags interface {
+	IsPinned() bool
+	IsLocked() bool
+	IsEphemeral() bool
+}
+
+// EphemeralInfo represents TTL information
+type EphemeralInfo struct {
+	TTLSeconds int
+	ExpiresAt  time.Time
+}
+
+// Activity represents workspace activity
+type Activity interface {
+	GetLastGitActivityAt() *time.Time
+}
+
+// Status represents workspace status
+type Status interface {
+	IsDirty() bool
+	HasConflicts() bool
+	GetAhead() int
+}
 
 // Policy defines a cleanup policy
 type Policy interface {
 	Name() string
-	Evaluate(ws core.Workspace) (RemovalReason, bool)
+	Evaluate(ws Workspace) (RemovalReason, bool)
 }
 
 // RemovalReason describes why a workspace should be removed
@@ -37,20 +71,23 @@ func (p *DefaultPolicy) Name() string {
 	return "default"
 }
 
-func (p *DefaultPolicy) Evaluate(ws core.Workspace) (RemovalReason, bool) {
+func (p *DefaultPolicy) Evaluate(ws Workspace) (RemovalReason, bool) {
+	flags := ws.GetFlags()
+
 	// Skip pinned workspaces
-	if ws.Flags.Pinned {
+	if flags.IsPinned() {
 		return RemovalReason{}, false
 	}
 
 	// Skip locked workspaces
-	if ws.Flags.Locked {
+	if flags.IsLocked() {
 		return RemovalReason{}, false
 	}
 
 	// Remove expired ephemeral workspaces
-	if ws.Flags.Ephemeral && ws.Ephemeral != nil {
-		if time.Now().After(ws.Ephemeral.ExpiresAt) {
+	if flags.IsEphemeral() {
+		ephemeral := ws.GetEphemeral()
+		if ephemeral != nil && time.Now().After(ephemeral.ExpiresAt) {
 			return RemovalReason{
 				Code:    "expired_ephemeral",
 				Message: "Ephemeral workspace has expired",
@@ -59,9 +96,12 @@ func (p *DefaultPolicy) Evaluate(ws core.Workspace) (RemovalReason, bool) {
 	}
 
 	// Remove workspaces idle for more than 30 days (not dirty)
-	if ws.Activity.LastGitActivityAt != nil {
-		idleTime := time.Since(*ws.Activity.LastGitActivityAt)
-		if idleTime > 30*24*time.Hour && !ws.Status.Dirty {
+	activity := ws.GetActivity()
+	lastActivity := activity.GetLastGitActivityAt()
+	if lastActivity != nil {
+		idleTime := time.Since(*lastActivity)
+		status := ws.GetStatus()
+		if idleTime > 30*24*time.Hour && !status.IsDirty() {
 			return RemovalReason{
 				Code:    "idle_30d",
 				Message: "Workspace idle for more than 30 days",
@@ -79,20 +119,23 @@ func (p *ConservativePolicy) Name() string {
 	return "conservative"
 }
 
-func (p *ConservativePolicy) Evaluate(ws core.Workspace) (RemovalReason, bool) {
+func (p *ConservativePolicy) Evaluate(ws Workspace) (RemovalReason, bool) {
+	flags := ws.GetFlags()
+
 	// Skip pinned workspaces
-	if ws.Flags.Pinned {
+	if flags.IsPinned() {
 		return RemovalReason{}, false
 	}
 
 	// Skip locked workspaces
-	if ws.Flags.Locked {
+	if flags.IsLocked() {
 		return RemovalReason{}, false
 	}
 
 	// Only remove expired ephemeral workspaces
-	if ws.Flags.Ephemeral && ws.Ephemeral != nil {
-		if time.Now().After(ws.Ephemeral.ExpiresAt) {
+	if flags.IsEphemeral() {
+		ephemeral := ws.GetEphemeral()
+		if ephemeral != nil && time.Now().After(ephemeral.ExpiresAt) {
 			return RemovalReason{
 				Code:    "expired_ephemeral",
 				Message: "Ephemeral workspace has expired",
@@ -110,20 +153,23 @@ func (p *AggressivePolicy) Name() string {
 	return "aggressive"
 }
 
-func (p *AggressivePolicy) Evaluate(ws core.Workspace) (RemovalReason, bool) {
+func (p *AggressivePolicy) Evaluate(ws Workspace) (RemovalReason, bool) {
+	flags := ws.GetFlags()
+
 	// Skip pinned workspaces
-	if ws.Flags.Pinned {
+	if flags.IsPinned() {
 		return RemovalReason{}, false
 	}
 
 	// Skip locked workspaces (even in aggressive mode)
-	if ws.Flags.Locked {
+	if flags.IsLocked() {
 		return RemovalReason{}, false
 	}
 
 	// Remove expired ephemeral workspaces
-	if ws.Flags.Ephemeral && ws.Ephemeral != nil {
-		if time.Now().After(ws.Ephemeral.ExpiresAt) {
+	if flags.IsEphemeral() {
+		ephemeral := ws.GetEphemeral()
+		if ephemeral != nil && time.Now().After(ephemeral.ExpiresAt) {
 			return RemovalReason{
 				Code:    "expired_ephemeral",
 				Message: "Ephemeral workspace has expired",
@@ -132,8 +178,10 @@ func (p *AggressivePolicy) Evaluate(ws core.Workspace) (RemovalReason, bool) {
 	}
 
 	// Remove workspaces idle for more than 7 days
-	if ws.Activity.LastGitActivityAt != nil {
-		idleTime := time.Since(*ws.Activity.LastGitActivityAt)
+	activity := ws.GetActivity()
+	lastActivity := activity.GetLastGitActivityAt()
+	if lastActivity != nil {
+		idleTime := time.Since(*lastActivity)
 		if idleTime > 7*24*time.Hour {
 			return RemovalReason{
 				Code:    "idle_7d",
