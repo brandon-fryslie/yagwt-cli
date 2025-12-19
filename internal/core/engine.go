@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bmf/yagwt/internal/cleanup"
 	"github.com/bmf/yagwt/internal/config"
 	"github.com/bmf/yagwt/internal/git"
 	"github.com/bmf/yagwt/internal/lock"
@@ -801,14 +802,229 @@ func (e *engine) setFlag(selector Selector, flag string, value bool) error {
 	return e.store.Set(ws.ID, meta)
 }
 
-// Cleanup is a stub for Phase 3
+// Cleanup generates and optionally executes a cleanup plan
 func (e *engine) Cleanup(opts CleanupOptions) (CleanupPlan, error) {
-	return CleanupPlan{}, NewError(ErrConfig, "cleanup operation not yet implemented")
+	// Get policy
+	policy := cleanup.GetPolicy(opts.Policy)
+
+	// List all workspaces
+	workspaces, err := e.List(ListOptions{})
+	if err != nil {
+		return CleanupPlan{}, err
+	}
+
+	// Generate plan
+	actions, warnings := generateCleanupPlan(workspaces, policy)
+
+	// Apply max limit
+	if opts.Max > 0 && len(actions) > opts.Max {
+		actions = actions[:opts.Max]
+	}
+
+	plan := CleanupPlan{
+		Actions:  actions,
+		Warnings: warnings,
+	}
+
+	// If dry-run, return plan without executing
+	if opts.DryRun {
+		return plan, nil
+	}
+
+	// Acquire lock for write operations
+	lck, err := e.lockMgr.NewLock(e.lockPath)
+	if err != nil {
+		return plan, err
+	}
+
+	if err := lck.Acquire(5 * time.Second); err != nil {
+		return plan, err
+	}
+	defer lck.Release()
+
+	// Execute removals
+	var executed []RemovalAction
+	for _, action := range actions {
+		// Determine on-dirty strategy
+		onDirty := opts.OnDirty
+		if onDirty == "" {
+			onDirty = "fail"
+		}
+		action.OnDirty = onDirty
+
+		// Try to remove
+		err := e.Remove(
+			Selector{Type: SelectorID, Value: action.Workspace.ID},
+			RemoveOptions{OnDirty: onDirty},
+		)
+		if err != nil {
+			// Add warning but continue with other removals
+			plan.Warnings = append(plan.Warnings, Warning{
+				Code:    "removal_failed",
+				Message: "Failed to remove '" + action.Workspace.Name + "': " + err.Error(),
+			})
+			continue
+		}
+
+		executed = append(executed, action)
+	}
+
+	// Update actions to show only executed ones
+	plan.Actions = executed
+
+	return plan, nil
 }
 
-// Doctor is a stub for Phase 3
+// Doctor detects and optionally repairs inconsistencies
 func (e *engine) Doctor(opts DoctorOptions) (DoctorReport, error) {
-	return DoctorReport{}, NewError(ErrConfig, "doctor operation not yet implemented")
+	report := DoctorReport{
+		BrokenWorkspaces: []Workspace{},
+		Repairs:          []Repair{},
+		Warnings:         []Warning{},
+	}
+
+	// Get git worktrees
+	worktrees, err := e.repo.ListWorktrees()
+	if err != nil {
+		return report, err
+	}
+
+	// Load metadata
+	meta, err := e.store.Load()
+	if err != nil {
+		return report, err
+	}
+
+	// Build maps for comparison
+	worktreePaths := make(map[string]bool)
+	for _, wt := range worktrees {
+		normalizedPath := normalizePath(wt.Path)
+		worktreePaths[normalizedPath] = true
+	}
+
+	metaPaths := make(map[string]string) // path -> ID
+	for id, ws := range meta.Workspaces {
+		normalizedPath := normalizePath(ws.Path)
+		metaPaths[normalizedPath] = id
+	}
+
+	// Check for orphaned metadata (metadata without worktree)
+	for path, id := range metaPaths {
+		if !worktreePaths[path] {
+			ws := meta.Workspaces[id]
+			report.BrokenWorkspaces = append(report.BrokenWorkspaces, Workspace{
+				ID:   ws.ID,
+				Name: ws.Name,
+				Path: ws.Path,
+				Flags: WorkspaceFlags{
+					Broken: true,
+				},
+			})
+
+			repair := Repair{
+				WorkspaceID: id,
+				Issue:       "Metadata exists for missing worktree",
+				Fix:         "Remove orphaned metadata",
+				Applied:     false,
+			}
+
+			if !opts.DryRun && opts.ForgetMissing {
+				if err := e.store.Delete(id); err != nil {
+					report.Warnings = append(report.Warnings, Warning{
+						Code:    "repair_failed",
+						Message: "Failed to remove orphaned metadata for '" + ws.Name + "': " + err.Error(),
+					})
+				} else {
+					repair.Applied = true
+				}
+			}
+
+			report.Repairs = append(report.Repairs, repair)
+		}
+	}
+
+	// Check for untracked worktrees (worktree without metadata)
+	for _, wt := range worktrees {
+		normalizedPath := normalizePath(wt.Path)
+		if _, hasMetadata := metaPaths[normalizedPath]; !hasMetadata {
+			// Skip primary worktree (usually doesn't need metadata)
+			isPrimary := len(worktrees) > 0 && normalizedPath == normalizePath(worktrees[0].Path)
+			if isPrimary {
+				continue
+			}
+
+			repair := Repair{
+				WorkspaceID: "",
+				Issue:       "Worktree exists without metadata: " + wt.Path,
+				Fix:         "Create metadata entry",
+				Applied:     false,
+			}
+
+			if !opts.DryRun {
+				// Create metadata for untracked worktree
+				wsID := uuid.New().String()
+				wsName := filepath.Base(wt.Path)
+				now := time.Now()
+
+				wsMeta := metadata.WorkspaceMetadata{
+					ID:   wsID,
+					Name: wsName,
+					Path: wt.Path,
+					Flags: map[string]bool{
+						"pinned":    false,
+						"ephemeral": false,
+						"locked":    false,
+					},
+					Activity: metadata.ActivityMetadata{
+						LastGitActivityAt: &now,
+					},
+					CreatedAt: now,
+					UpdatedAt: now,
+				}
+
+				if err := e.store.Set(wsID, wsMeta); err != nil {
+					report.Warnings = append(report.Warnings, Warning{
+						Code:    "repair_failed",
+						Message: "Failed to create metadata for '" + wsName + "': " + err.Error(),
+					})
+				} else {
+					repair.Applied = true
+					repair.WorkspaceID = wsID
+				}
+			}
+
+			report.Repairs = append(report.Repairs, repair)
+		}
+	}
+
+	// Check for stale index entries
+	reloadedMeta, _ := e.store.Load()
+	for path, id := range reloadedMeta.Index.ByPath {
+		if _, exists := reloadedMeta.Workspaces[id]; !exists {
+			repair := Repair{
+				WorkspaceID: id,
+				Issue:       "Stale index entry for path: " + path,
+				Fix:         "Rebuild indexes",
+				Applied:     false,
+			}
+
+			if !opts.DryRun {
+				if err := e.store.RebuildIndex(); err != nil {
+					report.Warnings = append(report.Warnings, Warning{
+						Code:    "repair_failed",
+						Message: "Failed to rebuild indexes: " + err.Error(),
+					})
+				} else {
+					repair.Applied = true
+				}
+			}
+
+			report.Repairs = append(report.Repairs, repair)
+			break // Only need to rebuild once
+		}
+	}
+
+	return report, nil
 }
 
 // selectorToString converts a Selector back to a string for error messages
