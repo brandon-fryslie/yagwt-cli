@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/bmf/yagwt/internal/core"
+	"github.com/bmf/yagwt/internal/errors"
 )
 
 // Store persists workspace metadata
@@ -76,7 +76,7 @@ func NewStore(gitDir string) (Store, error) {
 	// Create directory if it doesn't exist
 	storeDir := filepath.Dir(storePath)
 	if err := os.MkdirAll(storeDir, 0755); err != nil {
-		return nil, core.WrapError(core.ErrConfig, "failed to create metadata directory", err).
+		return nil, errors.WrapError(errors.ErrConfig, "failed to create metadata directory", err).
 			WithDetail("path", storeDir)
 	}
 
@@ -103,21 +103,21 @@ func (s *store) Load() (Metadata, error) {
 	// Read file
 	data, err := os.ReadFile(s.path)
 	if err != nil {
-		return Metadata{}, core.WrapError(core.ErrConfig, "failed to read metadata file", err).
+		return Metadata{}, errors.WrapError(errors.ErrConfig, "failed to read metadata file", err).
 			WithDetail("path", s.path)
 	}
 
 	// Parse JSON
 	var metadata Metadata
 	if err := json.Unmarshal(data, &metadata); err != nil {
-		return Metadata{}, core.WrapError(core.ErrConfig, "corrupted metadata file", err).
+		return Metadata{}, errors.WrapError(errors.ErrConfig, "corrupted metadata file", err).
 			WithDetail("path", s.path).
 			WithHint("Try removing the metadata file to start fresh", "rm "+s.path)
 	}
 
 	// Validate schema version
 	if metadata.SchemaVersion != 1 {
-		return Metadata{}, core.NewError(core.ErrConfig, "unsupported metadata schema version").
+		return Metadata{}, errors.NewError(errors.ErrConfig, "unsupported metadata schema version").
 			WithDetail("version", metadata.SchemaVersion).
 			WithDetail("expected", 1)
 	}
@@ -148,7 +148,7 @@ func (s *store) Get(id string) (WorkspaceMetadata, error) {
 
 	ws, ok := metadata.Workspaces[id]
 	if !ok {
-		return WorkspaceMetadata{}, core.NewError(core.ErrNotFound, "workspace not found").
+		return WorkspaceMetadata{}, errors.NewError(errors.ErrNotFound, "workspace not found").
 			WithDetail("id", id)
 	}
 
@@ -164,14 +164,14 @@ func (s *store) FindByName(name string) (WorkspaceMetadata, error) {
 
 	id, ok := metadata.Index.ByName[name]
 	if !ok {
-		return WorkspaceMetadata{}, core.NewError(core.ErrNotFound, "workspace not found").
+		return WorkspaceMetadata{}, errors.NewError(errors.ErrNotFound, "workspace not found").
 			WithDetail("name", name)
 	}
 
 	ws, ok := metadata.Workspaces[id]
 	if !ok {
 		// Index is inconsistent
-		return WorkspaceMetadata{}, core.NewError(core.ErrBroken, "metadata index is inconsistent").
+		return WorkspaceMetadata{}, errors.NewError(errors.ErrBroken, "metadata index is inconsistent").
 			WithDetail("name", name).
 			WithDetail("id", id).
 			WithHint("Try rebuilding the index", "")
@@ -189,14 +189,14 @@ func (s *store) FindByPath(path string) (WorkspaceMetadata, error) {
 
 	id, ok := metadata.Index.ByPath[path]
 	if !ok {
-		return WorkspaceMetadata{}, core.NewError(core.ErrNotFound, "workspace not found").
+		return WorkspaceMetadata{}, errors.NewError(errors.ErrNotFound, "workspace not found").
 			WithDetail("path", path)
 	}
 
 	ws, ok := metadata.Workspaces[id]
 	if !ok {
 		// Index is inconsistent
-		return WorkspaceMetadata{}, core.NewError(core.ErrBroken, "metadata index is inconsistent").
+		return WorkspaceMetadata{}, errors.NewError(errors.ErrBroken, "metadata index is inconsistent").
 			WithDetail("path", path).
 			WithDetail("id", id).
 			WithHint("Try rebuilding the index", "")
@@ -213,20 +213,20 @@ func (s *store) Save(metadata Metadata) error {
 	// Marshal to JSON
 	data, err := json.MarshalIndent(metadata, "", "  ")
 	if err != nil {
-		return core.WrapError(core.ErrConfig, "failed to marshal metadata", err)
+		return errors.WrapError(errors.ErrConfig, "failed to marshal metadata", err)
 	}
 
 	// Write to temporary file first
 	tmpPath := s.path + ".tmp"
 	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
-		return core.WrapError(core.ErrConfig, "failed to write metadata file", err).
+		return errors.WrapError(errors.ErrConfig, "failed to write metadata file", err).
 			WithDetail("path", tmpPath)
 	}
 
 	// Atomically rename to final path
 	if err := os.Rename(tmpPath, s.path); err != nil {
 		os.Remove(tmpPath) // Clean up temp file
-		return core.WrapError(core.ErrConfig, "failed to save metadata file", err).
+		return errors.WrapError(errors.ErrConfig, "failed to save metadata file", err).
 			WithDetail("path", s.path)
 	}
 
@@ -260,7 +260,7 @@ func (s *store) Delete(id string) error {
 
 	ws, ok := metadata.Workspaces[id]
 	if !ok {
-		return core.NewError(core.ErrNotFound, "workspace not found").
+		return errors.NewError(errors.ErrNotFound, "workspace not found").
 			WithDetail("id", id)
 	}
 
@@ -298,7 +298,7 @@ func (s *store) RebuildIndex() error {
 		// Detect duplicates
 		if existingID, ok := metadata.Index.ByPath[ws.Path]; ok && existingID != id {
 			// Log warning but continue
-			_ = core.NewError(core.ErrBroken, "duplicate path in metadata").
+			_ = errors.NewError(errors.ErrBroken, "duplicate path in metadata").
 				WithDetail("path", ws.Path).
 				WithDetail("id1", existingID).
 				WithDetail("id2", id)
@@ -306,7 +306,7 @@ func (s *store) RebuildIndex() error {
 
 		if existingID, ok := metadata.Index.ByName[ws.Name]; ok && existingID != id {
 			// Log warning but continue
-			_ = core.NewError(core.ErrBroken, "duplicate name in metadata").
+			_ = errors.NewError(errors.ErrBroken, "duplicate name in metadata").
 				WithDetail("name", ws.Name).
 				WithDetail("id1", existingID).
 				WithDetail("id2", id)

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bmf/yagwt/internal/core"
+	"github.com/bmf/yagwt/internal/errors"
 )
 
 func TestLockAcquireRelease(t *testing.T) {
@@ -80,13 +80,13 @@ func TestLockTimeout(t *testing.T) {
 	}
 
 	// Verify it's a lock error
-	coreErr, ok := err.(*core.Error)
+	coreErr, ok := err.(*errors.Error)
 	if !ok {
-		t.Fatalf("Expected *core.Error, got %T", err)
+		t.Fatalf("Expected *errors.Error, got %T", err)
 	}
 
-	if coreErr.Code != core.ErrLocked {
-		t.Errorf("Expected error code %s, got %s", core.ErrLocked, coreErr.Code)
+	if coreErr.Code != errors.ErrLocked {
+		t.Errorf("Expected error code %s, got %s", errors.ErrLocked, coreErr.Code)
 	}
 
 	// Verify timeout was respected (with some tolerance)
@@ -165,13 +165,13 @@ func TestLockReleaseWithoutAcquire(t *testing.T) {
 		t.Fatal("Expected error when releasing lock that wasn't acquired")
 	}
 
-	coreErr, ok := err.(*core.Error)
+	coreErr, ok := err.(*errors.Error)
 	if !ok {
-		t.Fatalf("Expected *core.Error, got %T", err)
+		t.Fatalf("Expected *errors.Error, got %T", err)
 	}
 
-	if coreErr.Code != core.ErrConfig {
-		t.Errorf("Expected error code %s, got %s", core.ErrConfig, coreErr.Code)
+	if coreErr.Code != errors.ErrConfig {
+		t.Errorf("Expected error code %s, got %s", errors.ErrConfig, coreErr.Code)
 	}
 }
 

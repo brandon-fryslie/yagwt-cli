@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bmf/yagwt/internal/core"
+	"github.com/bmf/yagwt/internal/errors"
 )
 
 // Repository provides git operations
@@ -80,12 +80,12 @@ func NewRepository(path string) (Repository, error) {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			stderr := string(exitErr.Stderr)
 			if strings.Contains(stderr, "not a git repository") {
-				return nil, core.NewError(core.ErrGit, "not a git repository").
+				return nil, errors.NewError(errors.ErrGit, "not a git repository").
 					WithDetail("path", path).
 					WithHint("Initialize a git repository first", "git init")
 			}
 		}
-		return nil, core.WrapError(core.ErrGit, "failed to find git repository", err).
+		return nil, errors.WrapError(errors.ErrGit, "failed to find git repository", err).
 			WithDetail("path", path)
 	}
 
@@ -95,7 +95,7 @@ func NewRepository(path string) (Repository, error) {
 	cmd = exec.Command("git", "-C", root, "rev-parse", "--git-dir")
 	output, err = cmd.Output()
 	if err != nil {
-		return nil, core.WrapError(core.ErrGit, "failed to find git directory", err).
+		return nil, errors.WrapError(errors.ErrGit, "failed to find git directory", err).
 			WithDetail("root", root)
 	}
 
@@ -116,7 +116,7 @@ func (r *repo) ListWorktrees() ([]Worktree, error) {
 	cmd := exec.Command("git", "-C", r.root, "worktree", "list", "--porcelain")
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, core.WrapError(core.ErrGit, "failed to list worktrees", err)
+		return nil, errors.WrapError(errors.ErrGit, "failed to list worktrees", err)
 	}
 
 	return parseWorktreeList(output)
@@ -187,7 +187,7 @@ func parseWorktreeList(output []byte) ([]Worktree, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, core.WrapError(core.ErrGit, "failed to parse worktree list", err)
+		return nil, errors.WrapError(errors.ErrGit, "failed to parse worktree list", err)
 	}
 
 	return worktrees, nil
@@ -221,7 +221,7 @@ func (r *repo) AddWorktree(path, ref string, opts AddOptions) error {
 
 	if err := cmd.Run(); err != nil {
 		errMsg := stderr.String()
-		return core.WrapError(core.ErrGit, "failed to add worktree", err).
+		return errors.WrapError(errors.ErrGit, "failed to add worktree", err).
 			WithDetail("path", path).
 			WithDetail("ref", ref).
 			WithDetail("stderr", errMsg)
@@ -249,18 +249,18 @@ func (r *repo) RemoveWorktree(path string, force bool) error {
 
 		// Check for specific error conditions
 		if strings.Contains(errMsg, "is locked") {
-			return core.NewError(core.ErrLocked, "worktree is locked").
+			return errors.NewError(errors.ErrLocked, "worktree is locked").
 				WithDetail("path", path).
 				WithHint("Use --force to remove locked worktree", "")
 		}
 
 		if strings.Contains(errMsg, "contains modified or untracked files") {
-			return core.NewError(core.ErrDirty, "worktree contains uncommitted changes").
+			return errors.NewError(errors.ErrDirty, "worktree contains uncommitted changes").
 				WithDetail("path", path).
 				WithHint("Commit or stash changes, or use --force", "git -C "+path+" status")
 		}
 
-		return core.WrapError(core.ErrGit, "failed to remove worktree", err).
+		return errors.WrapError(errors.ErrGit, "failed to remove worktree", err).
 			WithDetail("path", path).
 			WithDetail("stderr", errMsg)
 	}
@@ -273,7 +273,7 @@ func (r *repo) GetStatus(path string) (Status, error) {
 	cmd := exec.Command("git", "-C", path, "status", "--porcelain=v2", "--branch")
 	output, err := cmd.Output()
 	if err != nil {
-		return Status{}, core.WrapError(core.ErrGit, "failed to get status", err).
+		return Status{}, errors.WrapError(errors.ErrGit, "failed to get status", err).
 			WithDetail("path", path)
 	}
 
@@ -323,7 +323,7 @@ func parseStatusV2(output []byte) (Status, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return Status{}, core.WrapError(core.ErrGit, "failed to parse status output", err)
+		return Status{}, errors.WrapError(errors.ErrGit, "failed to parse status output", err)
 	}
 
 	return status, nil
@@ -339,11 +339,11 @@ func (r *repo) ResolveRef(ref string) (string, error) {
 			if strings.Contains(stderr, "unknown revision") ||
 				strings.Contains(stderr, "bad revision") ||
 				strings.Contains(stderr, "not a valid") {
-				return "", core.NewError(core.ErrNotFound, "ref not found").
+				return "", errors.NewError(errors.ErrNotFound, "ref not found").
 					WithDetail("ref", ref)
 			}
 		}
-		return "", core.WrapError(core.ErrGit, "failed to resolve ref", err).
+		return "", errors.WrapError(errors.ErrGit, "failed to resolve ref", err).
 			WithDetail("ref", ref)
 	}
 
@@ -365,7 +365,7 @@ func (r *repo) GetBranch(ref string) (Branch, error) {
 		"refs/heads/"+ref)
 	output, err := cmd.Output()
 	if err != nil {
-		return Branch{}, core.WrapError(core.ErrGit, "failed to get branch info", err).
+		return Branch{}, errors.WrapError(errors.ErrGit, "failed to get branch info", err).
 			WithDetail("ref", ref)
 	}
 

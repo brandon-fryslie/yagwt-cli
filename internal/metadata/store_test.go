@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bmf/yagwt/internal/core"
+	"github.com/bmf/yagwt/internal/errors"
 	"github.com/google/uuid"
 )
 
@@ -180,13 +180,13 @@ func TestFindByName(t *testing.T) {
 		t.Fatal("Expected error for non-existent workspace")
 	}
 
-	coreErr, ok := err.(*core.Error)
+	coreErr, ok := err.(*errors.Error)
 	if !ok {
-		t.Fatalf("Expected *core.Error, got %T", err)
+		t.Fatalf("Expected *errors.Error, got %T", err)
 	}
 
-	if coreErr.Code != core.ErrNotFound {
-		t.Errorf("Expected error code %s, got %s", core.ErrNotFound, coreErr.Code)
+	if coreErr.Code != errors.ErrNotFound {
+		t.Errorf("Expected error code %s, got %s", errors.ErrNotFound, coreErr.Code)
 	}
 }
 
@@ -224,13 +224,13 @@ func TestFindByPath(t *testing.T) {
 		t.Fatal("Expected error for non-existent workspace")
 	}
 
-	coreErr, ok := err.(*core.Error)
+	coreErr, ok := err.(*errors.Error)
 	if !ok {
-		t.Fatalf("Expected *core.Error, got %T", err)
+		t.Fatalf("Expected *errors.Error, got %T", err)
 	}
 
-	if coreErr.Code != core.ErrNotFound {
-		t.Errorf("Expected error code %s, got %s", core.ErrNotFound, coreErr.Code)
+	if coreErr.Code != errors.ErrNotFound {
+		t.Errorf("Expected error code %s, got %s", errors.ErrNotFound, coreErr.Code)
 	}
 }
 
@@ -477,12 +477,12 @@ func TestCorruptedMetadata(t *testing.T) {
 		t.Fatal("Expected error when loading corrupted metadata")
 	}
 
-	coreErr, ok := err.(*core.Error)
+	coreErr, ok := err.(*errors.Error)
 	if !ok {
-		t.Fatalf("Expected *core.Error, got %T", err)
+		t.Fatalf("Expected *errors.Error, got %T", err)
 	}
 
-	if coreErr.Code != core.ErrConfig {
-		t.Errorf("Expected error code %s, got %s", core.ErrConfig, coreErr.Code)
+	if coreErr.Code != errors.ErrConfig {
+		t.Errorf("Expected error code %s, got %s", errors.ErrConfig, coreErr.Code)
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/bmf/yagwt/internal/core"
+	"github.com/bmf/yagwt/internal/errors"
 	"github.com/pelletier/go-toml/v2"
 )
 
@@ -78,14 +78,14 @@ func Load(repoRoot string, configPath string) (*Config, error) {
 		// Read and parse config
 		data, err := os.ReadFile(path)
 		if err != nil {
-			return nil, core.WrapError(core.ErrConfig, "failed to read config file", err).
+			return nil, errors.WrapError(errors.ErrConfig, "failed to read config file", err).
 				WithDetail("path", path)
 		}
 
 		// Parse TOML
 		var fileConfig Config
 		if err := toml.Unmarshal(data, &fileConfig); err != nil {
-			return nil, core.WrapError(core.ErrConfig, "failed to parse config file", err).
+			return nil, errors.WrapError(errors.ErrConfig, "failed to parse config file", err).
 				WithDetail("path", path).
 				WithHint("Check TOML syntax", "")
 		}
@@ -207,7 +207,7 @@ func mergeConfig(base *Config, override *Config) *Config {
 func validateConfig(config *Config) error {
 	// Validate root strategy
 	if config.Workspace.RootStrategy != "sibling" && config.Workspace.RootStrategy != "inside" {
-		return core.NewError(core.ErrConfig, "invalid rootStrategy").
+		return errors.NewError(errors.ErrConfig, "invalid rootStrategy").
 			WithDetail("value", config.Workspace.RootStrategy).
 			WithDetail("valid", "sibling, inside")
 	}
@@ -222,7 +222,7 @@ func validateConfig(config *Config) error {
 
 	for name, policy := range config.Cleanup.Policies {
 		if policy.OnDirty != "" && !validOnDirty[policy.OnDirty] {
-			return core.NewError(core.ErrConfig, "invalid onDirty value in cleanup policy").
+			return errors.NewError(errors.ErrConfig, "invalid onDirty value in cleanup policy").
 				WithDetail("policy", name).
 				WithDetail("value", policy.OnDirty).
 				WithDetail("valid", "fail, stash, patch, wip-commit")

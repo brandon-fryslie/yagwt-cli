@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bmf/yagwt/internal/core"
+	"github.com/bmf/yagwt/internal/errors"
 )
 
 // setupTestRepo creates a temporary git repository for testing
@@ -113,13 +113,13 @@ func TestNewRepository_NotGitRepo(t *testing.T) {
 		t.Fatal("Expected error when creating repository in non-git directory")
 	}
 
-	coreErr, ok := err.(*core.Error)
+	coreErr, ok := err.(*errors.Error)
 	if !ok {
-		t.Fatalf("Expected *core.Error, got %T", err)
+		t.Fatalf("Expected *errors.Error, got %T", err)
 	}
 
-	if coreErr.Code != core.ErrGit {
-		t.Errorf("Expected error code %s, got %s", core.ErrGit, coreErr.Code)
+	if coreErr.Code != errors.ErrGit {
+		t.Errorf("Expected error code %s, got %s", errors.ErrGit, coreErr.Code)
 	}
 }
 
@@ -156,14 +156,14 @@ func TestResolveRef(t *testing.T) {
 		t.Fatal("Expected error when resolving non-existent ref")
 	}
 
-	coreErr, ok := err.(*core.Error)
+	coreErr, ok := err.(*errors.Error)
 	if !ok {
-		t.Fatalf("Expected *core.Error, got %T", err)
+		t.Fatalf("Expected *errors.Error, got %T", err)
 	}
 
 	// Accept both E_NOT_FOUND and E_GIT for non-existent refs
-	if coreErr.Code != core.ErrNotFound && coreErr.Code != core.ErrGit {
-		t.Errorf("Expected error code %s or %s, got %s", core.ErrNotFound, core.ErrGit, coreErr.Code)
+	if coreErr.Code != errors.ErrNotFound && coreErr.Code != errors.ErrGit {
+		t.Errorf("Expected error code %s or %s, got %s", errors.ErrNotFound, errors.ErrGit, coreErr.Code)
 	}
 }
 
@@ -368,13 +368,13 @@ func TestRemoveWorktree_Dirty(t *testing.T) {
 		t.Fatal("Expected error when removing dirty worktree")
 	}
 
-	coreErr, ok := err.(*core.Error)
+	coreErr, ok := err.(*errors.Error)
 	if !ok {
-		t.Fatalf("Expected *core.Error, got %T", err)
+		t.Fatalf("Expected *errors.Error, got %T", err)
 	}
 
-	if coreErr.Code != core.ErrDirty {
-		t.Errorf("Expected error code %s, got %s", core.ErrDirty, coreErr.Code)
+	if coreErr.Code != errors.ErrDirty {
+		t.Errorf("Expected error code %s, got %s", errors.ErrDirty, coreErr.Code)
 	}
 
 	// Force remove should work
