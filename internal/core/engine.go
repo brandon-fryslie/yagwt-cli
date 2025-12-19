@@ -182,10 +182,11 @@ func (e *engine) List(opts ListOptions) ([]Workspace, error) {
 		return nil, err
 	}
 
-	// Build map of path -> metadata for efficient lookup
+	// Build map of normalized path -> metadata for efficient lookup
 	pathToMeta := make(map[string]metadata.WorkspaceMetadata)
 	for _, ws := range meta.Workspaces {
-		pathToMeta[ws.Path] = ws
+		normalizedPath := normalizePath(ws.Path)
+		pathToMeta[normalizedPath] = ws
 	}
 
 	// Merge worktrees with metadata
@@ -193,10 +194,12 @@ func (e *engine) List(opts ListOptions) ([]Workspace, error) {
 	seenPaths := make(map[string]bool)
 
 	for i, wt := range worktrees {
-		seenPaths[wt.Path] = true
+		// Normalize worktree path for consistent comparison
+		normalizedWtPath := normalizePath(wt.Path)
+		seenPaths[normalizedWtPath] = true
 
 		// Get metadata if available
-		wsMeta, hasMeta := pathToMeta[wt.Path]
+		wsMeta, hasMeta := pathToMeta[normalizedWtPath]
 
 		// Get git status
 		status, err := e.repo.GetStatus(wt.Path)
@@ -287,7 +290,8 @@ func (e *engine) List(opts ListOptions) ([]Workspace, error) {
 
 	// Check for orphaned metadata (metadata without git worktree)
 	for _, wsMeta := range meta.Workspaces {
-		if !seenPaths[wsMeta.Path] {
+		normalizedMetaPath := normalizePath(wsMeta.Path)
+		if !seenPaths[normalizedMetaPath] {
 			// Workspace metadata exists but git worktree is missing
 			ws := Workspace{
 				ID:   wsMeta.ID,
@@ -377,9 +381,11 @@ func (e *engine) Resolve(ref string) ([]Workspace, error) {
 		}
 
 	case SelectorPath:
-		// Direct path match (already normalized)
+		// Direct path match (normalize both for comparison)
+		normalizedSelectorPath := normalizePath(selector.Value)
 		for _, ws := range allWorkspaces {
-			if ws.Path == selector.Value {
+			normalizedWsPath := normalizePath(ws.Path)
+			if normalizedWsPath == normalizedSelectorPath {
 				matches = append(matches, ws)
 			}
 		}
@@ -415,8 +421,10 @@ func (e *engine) Resolve(ref string) ([]Workspace, error) {
 		}
 
 		// Try path
+		normalizedSelectorValue := normalizePath(selector.Value)
 		for _, ws := range allWorkspaces {
-			if ws.Path == selector.Value {
+			normalizedWsPath := normalizePath(ws.Path)
+			if normalizedWsPath == normalizedSelectorValue {
 				matches = append(matches, ws)
 			}
 		}

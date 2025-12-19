@@ -74,7 +74,7 @@ func ParseSelector(s string) Selector {
 	}
 }
 
-// normalizePath converts a path to absolute form
+// normalizePath converts a path to absolute form and resolves symlinks
 func normalizePath(path string) string {
 	// Clean the path first
 	path = filepath.Clean(path)
@@ -84,6 +84,11 @@ func normalizePath(path string) string {
 		if absPath, err := filepath.Abs(path); err == nil {
 			path = absPath
 		}
+	}
+
+	// Resolve symlinks to handle macOS /tmp -> /private/tmp
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		path = resolved
 	}
 
 	return path
