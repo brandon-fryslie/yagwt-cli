@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/bmf/yagwt/internal/cli/output"
 	"github.com/bmf/yagwt/internal/core"
@@ -60,6 +61,9 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 
+// defaultUsageFunc stores the default usage function
+var defaultUsageFunc func(*cobra.Command) error
+
 func init() {
 	// Global flags available to all commands
 	rootCmd.PersistentFlags().StringVarP(&repoPath, "repo", "r", "", "repository root (default: auto-detect from current directory)")
@@ -84,6 +88,62 @@ func init() {
 	rootCmd.AddCommand(unlockCmd)
 	rootCmd.AddCommand(cleanCmd)
 	rootCmd.AddCommand(doctorCmd)
+
+	// Store the default usage function before we override it
+	defaultUsageFunc = rootCmd.UsageFunc()
+
+	// Set custom usage function to show command arguments with proper alignment
+	rootCmd.SetUsageFunc(customUsageFunc)
+}
+
+// customUsageFunc returns a custom usage output with proper alignment for command arguments
+func customUsageFunc(cmd *cobra.Command) error {
+	// Only customize for the root command itself
+	if cmd != rootCmd {
+		// For all other commands, use default behavior
+		return defaultUsageFunc(cmd)
+	}
+
+	// Calculate maximum Use length for proper padding
+	maxUseLen := 0
+	for _, c := range cmd.Commands() {
+		if !c.IsAvailableCommand() && c.Name() != "help" {
+			continue
+		}
+		if len(c.Use) > maxUseLen {
+			maxUseLen = len(c.Use)
+		}
+	}
+
+	// Build the usage output (Long description is printed by help template, not here)
+	fmt.Fprintf(cmd.OutOrStdout(), "Usage:\n")
+	fmt.Fprintf(cmd.OutOrStdout(), "  %s [command]\n\n", cmd.CommandPath())
+
+	// Commands section
+	fmt.Fprintf(cmd.OutOrStdout(), "Available Commands:\n")
+	for _, c := range cmd.Commands() {
+		if !c.IsAvailableCommand() && c.Name() != "help" {
+			continue
+		}
+		padding := strings.Repeat(" ", maxUseLen-len(c.Use))
+		fmt.Fprintf(cmd.OutOrStdout(), "  %s%s  %s\n", c.Use, padding, c.Short)
+	}
+
+	// Flags section
+	if cmd.HasAvailableLocalFlags() {
+		fmt.Fprintf(cmd.OutOrStdout(), "\nFlags:\n")
+		fmt.Fprintf(cmd.OutOrStdout(), "%s", cmd.LocalFlags().FlagUsages())
+	}
+
+	if cmd.HasAvailableInheritedFlags() {
+		fmt.Fprintf(cmd.OutOrStdout(), "\nGlobal Flags:\n")
+		fmt.Fprintf(cmd.OutOrStdout(), "%s", cmd.InheritedFlags().FlagUsages())
+	}
+
+	// Footer
+	fmt.Fprintf(cmd.OutOrStdout(), "\nUse \"%s [command] --help\" for more information about a command.\n", cmd.CommandPath())
+
+	return nil
 }
 
 // initFormatter initializes the formatter based on flags
