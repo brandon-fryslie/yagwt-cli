@@ -1,12 +1,11 @@
 # Binaries
-yagwt
-yagwtd
+/bin/yagwt
+/bin/yagwtd
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-/bin/
 /dist/
 
 # Test binary, built with `go test -c`
@@ -46,3 +45,4 @@ testdata/repos/*/
 *.lock
 .agent_planning/do-command-logs
 mcp/yagwt-mcp
+/mcp/yagwt-mcp
