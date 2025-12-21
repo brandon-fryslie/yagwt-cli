@@ -35,14 +35,14 @@ type Metadata struct {
 
 // WorkspaceMetadata is per-workspace persistent data
 type WorkspaceMetadata struct {
-	ID        string                 `json:"id"`
-	Name      string                 `json:"name"`
-	Path      string                 `json:"path"`
-	Flags     map[string]bool        `json:"flags"`
-	Ephemeral *EphemeralMetadata     `json:"ephemeral,omitempty"`
-	Activity  ActivityMetadata       `json:"activity"`
-	CreatedAt time.Time              `json:"createdAt"`
-	UpdatedAt time.Time              `json:"updatedAt"`
+	ID        string             `json:"id"`
+	Name      string             `json:"name"`
+	Path      string             `json:"path"`
+	Flags     map[string]bool    `json:"flags"`
+	Ephemeral *EphemeralMetadata `json:"ephemeral,omitempty"`
+	Activity  ActivityMetadata   `json:"activity"`
+	CreatedAt time.Time          `json:"createdAt"`
+	UpdatedAt time.Time          `json:"updatedAt"`
 }
 
 // EphemeralMetadata contains TTL information

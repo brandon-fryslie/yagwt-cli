@@ -254,9 +254,9 @@ func TestParseInvalidFilter(t *testing.T) {
 
 func TestFlagFilterMatch(t *testing.T) {
 	tests := []struct {
-		name    string
-		filter  string
-		ws      core.Workspace
+		name      string
+		filter    string
+		ws        core.Workspace
 		wantMatch bool
 	}{
 		{

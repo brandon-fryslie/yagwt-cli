@@ -15,15 +15,15 @@ import (
 )
 
 var (
-	newName       string
-	newDir        string
-	newBase       string
-	newNewBranch  bool
-	newDetach     bool
-	newEphemeral  bool
-	newTTL        string
-	newPin        bool
-	newNoCheckout bool
+	newName        string
+	newDir         string
+	newBase        string
+	newNewBranch   bool
+	newDetach      bool
+	newEphemeral   bool
+	newTTL         string
+	newPin         bool
+	newNoCheckout  bool
 	newInteractive bool
 )
 

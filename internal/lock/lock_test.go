@@ -104,10 +104,10 @@ func TestConcurrentLockAcquisition(t *testing.T) {
 	const holdDuration = 50 * time.Millisecond
 
 	var (
-		wg            sync.WaitGroup
-		successCount  int
-		mu            sync.Mutex
-		acquisitions  []int
+		wg           sync.WaitGroup
+		successCount int
+		mu           sync.Mutex
+		acquisitions []int
 	)
 
 	for i := 0; i < numGoroutines; i++ {

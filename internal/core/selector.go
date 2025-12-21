@@ -24,11 +24,12 @@ type Selector struct {
 
 // ParseSelector parses a selector string into a typed Selector
 // Syntax:
-//   id:<uuid>       - Match by ID
-//   name:<alias>    - Match by name
-//   path:<path>     - Match by path (absolute or relative)
-//   branch:<branch> - Match by branch
-//   <bare>          - Try to resolve as: id → name → path → branch
+//
+//	id:<uuid>       - Match by ID
+//	name:<alias>    - Match by name
+//	path:<path>     - Match by path (absolute or relative)
+//	branch:<branch> - Match by branch
+//	<bare>          - Try to resolve as: id → name → path → branch
 func ParseSelector(s string) Selector {
 	// Check for typed selectors with prefix
 	if idx := strings.Index(s, ":"); idx > 0 {

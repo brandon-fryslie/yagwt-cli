@@ -146,10 +146,10 @@ func TestParseStatusV2(t *testing.T) {
 # branch.ab +0 -0
 `,
 			expected: Status{
-				Branch:  "main",
-				Dirty:   false,
-				Ahead:   0,
-				Behind:  0,
+				Branch:   "main",
+				Dirty:    false,
+				Ahead:    0,
+				Behind:   0,
 				Detached: false,
 			},
 		},

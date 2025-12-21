@@ -13,12 +13,12 @@ import (
 
 var (
 	// Common flags used across multiple commands
-	repoPath    string
-	jsonOutput  bool
-	porcelain   bool
-	quiet       bool
-	noPrompt    bool
-	autoYes     bool
+	repoPath   string
+	jsonOutput bool
+	porcelain  bool
+	quiet      bool
+	noPrompt   bool
+	autoYes    bool
 
 	// Shared formatter and engine (initialized per-command)
 	formatter output.Formatter
@@ -34,12 +34,12 @@ var (
 
 // Exit codes
 const (
-	ExitSuccess         = 0
-	ExitFailure         = 1
-	ExitInvalidUsage    = 2
-	ExitSafetyRefusal   = 3
-	ExitPartialSuccess  = 4
-	ExitNotFound        = 5
+	ExitSuccess        = 0
+	ExitFailure        = 1
+	ExitInvalidUsage   = 2
+	ExitSafetyRefusal  = 3
+	ExitPartialSuccess = 4
+	ExitNotFound       = 5
 )
 
 // rootCmd represents the base command when called without any subcommands

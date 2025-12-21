@@ -21,15 +21,15 @@ type jsonOutput struct {
 }
 
 type jsonWorkspace struct {
-	ID        string                 `json:"id"`
-	Name      string                 `json:"name"`
-	Path      string                 `json:"path"`
-	IsPrimary bool                   `json:"isPrimary"`
-	Target    jsonTarget             `json:"target"`
-	Flags     jsonFlags              `json:"flags"`
-	Ephemeral *jsonEphemeral         `json:"ephemeral,omitempty"`
-	Activity  jsonActivity           `json:"activity"`
-	Status    jsonStatus             `json:"status"`
+	ID        string         `json:"id"`
+	Name      string         `json:"name"`
+	Path      string         `json:"path"`
+	IsPrimary bool           `json:"isPrimary"`
+	Target    jsonTarget     `json:"target"`
+	Flags     jsonFlags      `json:"flags"`
+	Ephemeral *jsonEphemeral `json:"ephemeral,omitempty"`
+	Activity  jsonActivity   `json:"activity"`
+	Status    jsonStatus     `json:"status"`
 }
 
 type jsonTarget struct {

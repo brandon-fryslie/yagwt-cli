@@ -32,9 +32,9 @@ type mockStatus struct {
 	ahead     int
 }
 
-func (s *mockStatus) IsDirty() bool     { return s.dirty }
+func (s *mockStatus) IsDirty() bool      { return s.dirty }
 func (s *mockStatus) HasConflicts() bool { return s.conflicts }
-func (s *mockStatus) GetAhead() int     { return s.ahead }
+func (s *mockStatus) GetAhead() int      { return s.ahead }
 
 // mockWorkspace implements Workspace interface for testing
 type mockWorkspace struct {
@@ -173,8 +173,8 @@ func TestDefaultPolicy(t *testing.T) {
 		{
 			name: "remove idle workspace (30+ days)",
 			workspace: &mockWorkspace{
-				id:   "ws-5",
-				name: "idle-ws",
+				id:    "ws-5",
+				name:  "idle-ws",
 				flags: &mockFlags{},
 				activity: &mockActivity{
 					lastGitActivityAt: timePtr(now.Add(-35 * 24 * time.Hour)), // 35 days ago
@@ -189,8 +189,8 @@ func TestDefaultPolicy(t *testing.T) {
 		{
 			name: "keep idle but dirty workspace",
 			workspace: &mockWorkspace{
-				id:   "ws-6",
-				name: "idle-dirty-ws",
+				id:    "ws-6",
+				name:  "idle-dirty-ws",
 				flags: &mockFlags{},
 				activity: &mockActivity{
 					lastGitActivityAt: timePtr(now.Add(-35 * 24 * time.Hour)), // 35 days ago
@@ -204,8 +204,8 @@ func TestDefaultPolicy(t *testing.T) {
 		{
 			name: "keep recently active workspace",
 			workspace: &mockWorkspace{
-				id:   "ws-7",
-				name: "active-ws",
+				id:    "ws-7",
+				name:  "active-ws",
 				flags: &mockFlags{},
 				activity: &mockActivity{
 					lastGitActivityAt: timePtr(now.Add(-7 * 24 * time.Hour)), // 7 days ago
@@ -272,8 +272,8 @@ func TestConservativePolicy(t *testing.T) {
 		{
 			name: "keep idle workspace (conservative never removes non-ephemeral)",
 			workspace: &mockWorkspace{
-				id:   "ws-3",
-				name: "idle-ws",
+				id:    "ws-3",
+				name:  "idle-ws",
 				flags: &mockFlags{},
 				activity: &mockActivity{
 					lastGitActivityAt: timePtr(now.Add(-90 * 24 * time.Hour)), // 90 days ago
@@ -353,8 +353,8 @@ func TestAggressivePolicy(t *testing.T) {
 		{
 			name: "remove idle workspace (7+ days in aggressive)",
 			workspace: &mockWorkspace{
-				id:   "ws-4",
-				name: "idle-ws",
+				id:    "ws-4",
+				name:  "idle-ws",
 				flags: &mockFlags{},
 				activity: &mockActivity{
 					lastGitActivityAt: timePtr(now.Add(-10 * 24 * time.Hour)), // 10 days ago
@@ -367,8 +367,8 @@ func TestAggressivePolicy(t *testing.T) {
 		{
 			name: "remove idle dirty workspace (aggressive removes anyway)",
 			workspace: &mockWorkspace{
-				id:   "ws-5",
-				name: "idle-dirty-ws",
+				id:    "ws-5",
+				name:  "idle-dirty-ws",
 				flags: &mockFlags{},
 				activity: &mockActivity{
 					lastGitActivityAt: timePtr(now.Add(-10 * 24 * time.Hour)),
@@ -383,8 +383,8 @@ func TestAggressivePolicy(t *testing.T) {
 		{
 			name: "keep recently active workspace",
 			workspace: &mockWorkspace{
-				id:   "ws-6",
-				name: "active-ws",
+				id:    "ws-6",
+				name:  "active-ws",
 				flags: &mockFlags{},
 				activity: &mockActivity{
 					lastGitActivityAt: timePtr(now.Add(-3 * 24 * time.Hour)), // 3 days ago

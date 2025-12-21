@@ -198,7 +198,7 @@ func TestCreateEphemeralWorkspace(t *testing.T) {
 	opts := core.CreateOptions{
 		Target:    "feature-test",
 		Name:      "ephemeral-ws",
-		Dir:    filepath.Join(repoDir, ".workspaces", "ephemeral-ws"),
+		Dir:       filepath.Join(repoDir, ".workspaces", "ephemeral-ws"),
 		Ephemeral: true,
 		TTL:       7 * 24 * time.Hour,
 	}
@@ -217,8 +217,8 @@ func TestCreateEphemeralWorkspace(t *testing.T) {
 		t.Fatal("Ephemeral info should not be nil")
 	}
 
-	if ws.Ephemeral.TTLSeconds != int((7*24*time.Hour).Seconds()) {
-		t.Errorf("TTL = %d, want %d", ws.Ephemeral.TTLSeconds, int((7*24*time.Hour).Seconds()))
+	if ws.Ephemeral.TTLSeconds != int((7 * 24 * time.Hour).Seconds()) {
+		t.Errorf("TTL = %d, want %d", ws.Ephemeral.TTLSeconds, int((7 * 24 * time.Hour).Seconds()))
 	}
 
 	// ExpiresAt should be approximately 7 days from now
