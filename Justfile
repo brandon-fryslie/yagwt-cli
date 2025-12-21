@@ -79,9 +79,29 @@ uninstall:
 check: lint test build
     @echo "All checks passed!"
 
-# Watch for changes and run tests (requires entr)
+# Watch for changes and rebuild/reinstall (requires fswatch or entr)
 watch:
-    find . -name '*.go' | entr -c just test
+    @echo "Watching for changes... (Ctrl+C to stop)"
+    @if command -v fswatch >/dev/null 2>&1; then \
+        fswatch -o --include='\.go$' --exclude='.*' . | xargs -n1 -I{} just install; \
+    elif command -v entr >/dev/null 2>&1; then \
+        find . -name '*.go' | entr -c just install; \
+    else \
+        echo "Error: Install fswatch (brew install fswatch) or entr (brew install entr)"; \
+        exit 1; \
+    fi
+
+# Watch for changes and run tests (requires fswatch or entr)
+watch-test:
+    @echo "Watching for changes... (Ctrl+C to stop)"
+    @if command -v fswatch >/dev/null 2>&1; then \
+        fswatch -o --include='\.go$' --exclude='.*' . | xargs -n1 -I{} just test; \
+    elif command -v entr >/dev/null 2>&1; then \
+        find . -name '*.go' | entr -c just test; \
+    else \
+        echo "Error: Install fswatch (brew install fswatch) or entr (brew install entr)"; \
+        exit 1; \
+    fi
 
 # Generate mocks (requires mockgen)
 mocks:
