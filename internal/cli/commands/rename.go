@@ -7,10 +7,10 @@ import (
 
 var renameCmd = &cobra.Command{
 	Use:   "rename <selector> <new-name>",
-	Short: "Rename a workspace",
-	Long: `Change the name (alias) of a workspace.
+	Short: "Rename a worktree",
+	Long: `Change the name (alias) of a worktree.
 
-This only changes the workspace name in metadata, not the directory path.
+This only changes the worktree name in metadata, not the directory path.
 
 Examples:
   yagwt rename auth new-auth
@@ -28,14 +28,14 @@ Examples:
 		selector := core.ParseSelector(args[0])
 		newName := args[1]
 
-		// Rename workspace
+		// Rename worktree
 		if err := engine.Rename(selector, newName); err != nil {
 			handleError(err)
 		}
 
 		// Print success message
 		if !quiet {
-			printOutput(formatter.FormatSuccess("Workspace renamed successfully"))
+			printOutput(formatter.FormatSuccess("Worktree renamed successfully"))
 		}
 	},
 }

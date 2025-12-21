@@ -7,13 +7,13 @@ import (
 
 var showCmd = &cobra.Command{
 	Use:   "show <selector>",
-	Short: "Show workspace details",
-	Long: `Display detailed information about a workspace.
+	Short: "Show worktree details",
+	Long: `Display detailed information about a worktree.
 
 The selector can be:
-  - Workspace ID (id:wsp_...)
-  - Workspace name (name:feature-x or just feature-x)
-  - Path (path:/full/path/to/workspace)
+  - Worktree ID (id:wsp_...)
+  - Worktree name (name:feature-x or just feature-x)
+  - Path (path:/full/path/to/worktree)
   - Branch name (branch:feature/x)
 
 Examples:
@@ -33,14 +33,14 @@ Examples:
 		// Parse selector
 		selector := core.ParseSelector(args[0])
 
-		// Get workspace
-		workspace, err := engine.Get(selector)
+		// Get worktree
+		worktree, err := engine.Get(selector)
 		if err != nil {
 			handleError(err)
 		}
 
 		// Format and print output
-		output := formatter.FormatWorkspace(workspace)
+		output := formatter.FormatWorkspace(worktree)
 		printOutput(output)
 	},
 }

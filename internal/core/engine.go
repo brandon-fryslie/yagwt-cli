@@ -482,6 +482,7 @@ func (e *engine) Create(opts CreateOptions) (Workspace, error) {
 		Detach:    opts.Detached,
 		Checkout:  opts.Checkout,
 		Force:     false,
+		Base:      opts.Base,
 	}
 
 	// Create git worktree

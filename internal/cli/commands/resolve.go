@@ -6,10 +6,10 @@ import (
 
 var resolveCmd = &cobra.Command{
 	Use:   "resolve <selector>",
-	Short: "Resolve selector to workspace(s)",
-	Long: `Resolve a selector to all matching workspaces.
+	Short: "Resolve selector to worktree(s)",
+	Long: `Resolve a selector to all matching worktrees.
 
-This is useful for debugging selector ambiguity or seeing what workspaces
+This is useful for debugging selector ambiguity or seeing what worktrees
 match a particular pattern.
 
 Examples:
@@ -26,13 +26,13 @@ Examples:
 		}
 
 		// Resolve selector
-		workspaces, err := engine.Resolve(args[0])
+		worktrees, err := engine.Resolve(args[0])
 		if err != nil {
 			handleError(err)
 		}
 
 		// Format and print output
-		output := formatter.FormatWorkspaces(workspaces)
+		output := formatter.FormatWorkspaces(worktrees)
 		printOutput(output)
 	},
 }

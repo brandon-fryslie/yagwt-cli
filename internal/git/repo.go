@@ -69,6 +69,7 @@ type AddOptions struct {
 	Force     bool
 	Checkout  bool
 	Track     string // Upstream branch for --track
+	Base      string // Base commit/branch when creating new branch
 }
 
 // repo implements Repository interface
@@ -211,14 +212,18 @@ func (r *repo) AddWorktree(path, ref string, opts AddOptions) error {
 		args = append(args, "--detach")
 	}
 
-	if opts.NewBranch && opts.Track != "" {
-		args = append(args, "--track", opts.Track)
-	}
-
-	args = append(args, path)
-
-	if ref != "" {
-		args = append(args, ref)
+	if opts.NewBranch {
+		// git worktree add -b <new-branch> <path> [<commit-ish>]
+		args = append(args, "-b", ref, path)
+		if opts.Base != "" {
+			args = append(args, opts.Base)
+		}
+	} else {
+		// git worktree add <path> [<commit-ish>]
+		args = append(args, path)
+		if ref != "" {
+			args = append(args, ref)
+		}
 	}
 
 	cmd := exec.Command("git", args...)

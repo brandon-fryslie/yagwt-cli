@@ -15,16 +15,16 @@ var (
 
 var cleanCmd = &cobra.Command{
 	Use:   "clean",
-	Short: "Clean up stale workspaces",
-	Long: `Identify and optionally remove stale workspaces based on cleanup policies.
+	Short: "Clean up stale worktrees",
+	Long: `Identify and optionally remove stale worktrees based on cleanup policies.
 
 By default, this shows a plan without executing (dry-run mode).
-Use --apply to actually remove workspaces.
+Use --apply to actually remove worktrees.
 
 Cleanup policies:
-  - default: Remove expired ephemeral workspaces and idle workspaces (>30 days)
-  - conservative: Only remove expired ephemeral workspaces
-  - aggressive: Remove expired ephemeral and idle workspaces (>7 days)
+  - default: Remove expired ephemeral worktrees and idle worktrees (>30 days)
+  - conservative: Only remove expired ephemeral worktrees
+  - aggressive: Remove expired ephemeral and idle worktrees (>7 days)
 
 Examples:
   yagwt clean
@@ -75,6 +75,6 @@ func init() {
 	cleanCmd.Flags().StringVar(&cleanPolicy, "policy", "default", "cleanup policy: default, conservative, aggressive")
 	cleanCmd.Flags().BoolVar(&cleanDryRun, "dry-run", false, "show plan without executing (default)")
 	cleanCmd.Flags().BoolVar(&cleanApply, "apply", false, "execute the cleanup plan")
-	cleanCmd.Flags().StringVar(&cleanOnDirty, "on-dirty", "", "strategy for dirty workspaces: fail, stash, patch, wip-commit, force")
-	cleanCmd.Flags().IntVar(&cleanMax, "max", 0, "maximum workspaces to remove (0 = unlimited)")
+	cleanCmd.Flags().StringVar(&cleanOnDirty, "on-dirty", "", "strategy for dirty worktrees: fail, stash, patch, wip-commit, force")
+	cleanCmd.Flags().IntVar(&cleanMax, "max", 0, "maximum worktrees to remove (0 = unlimited)")
 }

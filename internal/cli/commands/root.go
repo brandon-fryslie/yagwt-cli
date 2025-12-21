@@ -27,7 +27,7 @@ var (
 
 // Version information (set at build time)
 var (
-	Version   = "1.0.0-dev"
+	Version   = "0.1.0-beta"
 	GitCommit = "unknown"
 	BuildDate = "unknown"
 )

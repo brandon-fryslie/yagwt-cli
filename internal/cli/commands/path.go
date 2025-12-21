@@ -7,8 +7,8 @@ import (
 
 var pathCmd = &cobra.Command{
 	Use:   "path <selector>",
-	Short: "Print workspace path",
-	Long: `Print the absolute path to a workspace.
+	Short: "Print worktree path",
+	Long: `Print the absolute path to a worktree.
 
 This command is designed for scripting and always outputs just the path,
 regardless of the --json or --porcelain flags.
@@ -28,14 +28,14 @@ Examples:
 		// Parse selector
 		selector := core.ParseSelector(args[0])
 
-		// Get workspace
-		workspace, err := engine.Get(selector)
+		// Get worktree
+		worktree, err := engine.Get(selector)
 		if err != nil {
 			handleError(err)
 		}
 
 		// Print just the path (for scripting)
-		output := formatter.FormatWorkspacePath(workspace)
+		output := formatter.FormatWorkspacePath(worktree)
 		printOutput(output)
 	},
 }

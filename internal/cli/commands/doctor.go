@@ -13,7 +13,7 @@ var (
 var doctorCmd = &cobra.Command{
 	Use:   "doctor",
 	Short: "Diagnose and repair issues",
-	Long: `Detect and optionally repair inconsistencies in workspace metadata.
+	Long: `Detect and optionally repair inconsistencies in worktree metadata.
 
 This command checks for:
   - Orphaned metadata (metadata without git worktree)

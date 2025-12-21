@@ -16,11 +16,11 @@ var (
 
 var rmCmd = &cobra.Command{
 	Use:   "rm <selector>",
-	Short: "Remove a workspace",
-	Long: `Remove a workspace and optionally its branch.
+	Short: "Remove a worktree",
+	Long: `Remove a worktree and optionally its branch.
 
-By default, removal will fail if the workspace has uncommitted changes.
-Use --on-dirty to specify how to handle dirty workspaces:
+By default, removal will fail if the worktree has uncommitted changes.
+Use --on-dirty to specify how to handle dirty worktrees:
   - fail: Abort removal (default)
   - stash: Stash changes before removal
   - patch: Save changes as a patch file
@@ -67,7 +67,7 @@ Examples:
 
 		// Print success message
 		if !quiet {
-			printOutput(formatter.FormatSuccess("Workspace removed successfully"))
+			printOutput(formatter.FormatSuccess("Worktree removed successfully"))
 		}
 	},
 }

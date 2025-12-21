@@ -7,10 +7,10 @@ import (
 
 var lockCmd = &cobra.Command{
 	Use:   "lock <selector>",
-	Short: "Lock a workspace",
-	Long: `Lock a workspace to prevent modifications.
+	Short: "Lock a worktree",
+	Long: `Lock a worktree to prevent modifications.
 
-Locked workspaces cannot be removed or modified until unlocked.
+Locked worktrees cannot be removed or modified until unlocked.
 
 Examples:
   yagwt lock auth
@@ -27,24 +27,24 @@ Examples:
 		// Parse selector
 		selector := core.ParseSelector(args[0])
 
-		// Lock workspace
+		// Lock worktree
 		if err := engine.Lock(selector); err != nil {
 			handleError(err)
 		}
 
 		// Print success message
 		if !quiet {
-			printOutput(formatter.FormatSuccess("Workspace locked successfully"))
+			printOutput(formatter.FormatSuccess("Worktree locked successfully"))
 		}
 	},
 }
 
 var unlockCmd = &cobra.Command{
 	Use:   "unlock <selector>",
-	Short: "Unlock a workspace",
-	Long: `Remove the lock flag from a workspace.
+	Short: "Unlock a worktree",
+	Long: `Remove the lock flag from a worktree.
 
-This allows the workspace to be modified or removed.
+This allows the worktree to be modified or removed.
 
 Examples:
   yagwt unlock auth
@@ -61,14 +61,14 @@ Examples:
 		// Parse selector
 		selector := core.ParseSelector(args[0])
 
-		// Unlock workspace
+		// Unlock worktree
 		if err := engine.Unlock(selector); err != nil {
 			handleError(err)
 		}
 
 		// Print success message
 		if !quiet {
-			printOutput(formatter.FormatSuccess("Workspace unlocked successfully"))
+			printOutput(formatter.FormatSuccess("Worktree unlocked successfully"))
 		}
 	},
 }

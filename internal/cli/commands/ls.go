@@ -12,13 +12,13 @@ var (
 
 var lsCmd = &cobra.Command{
 	Use:   "ls [filter]",
-	Short: "List workspaces",
-	Long: `List all workspaces with their status and metadata.
+	Short: "List worktrees",
+	Long: `List all worktrees with their status and metadata.
 
 Supports filtering with expressions like:
-  flag:pinned          - Show only pinned workspaces
-  flag:ephemeral       - Show only ephemeral workspaces
-  status:dirty         - Show only dirty workspaces
+  flag:pinned          - Show only pinned worktrees
+  flag:ephemeral       - Show only ephemeral worktrees
+  status:dirty         - Show only dirty worktrees
 
 Examples:
   yagwt ls
@@ -57,5 +57,5 @@ Examples:
 
 func init() {
 	lsCmd.Flags().StringVarP(&lsFilter, "filter", "f", "", "filter expression")
-	lsCmd.Flags().BoolVarP(&lsAll, "all", "a", false, "show all workspaces including broken")
+	lsCmd.Flags().BoolVarP(&lsAll, "all", "a", false, "show all worktrees including broken")
 }

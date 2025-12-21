@@ -7,10 +7,10 @@ import (
 
 var pinCmd = &cobra.Command{
 	Use:   "pin <selector>",
-	Short: "Pin a workspace",
-	Long: `Pin a workspace to prevent it from being automatically cleaned up.
+	Short: "Pin a worktree",
+	Long: `Pin a worktree to prevent it from being automatically cleaned up.
 
-Pinned workspaces are protected from cleanup operations and must be
+Pinned worktrees are protected from cleanup operations and must be
 explicitly removed with 'yagwt rm'.
 
 Examples:
@@ -28,24 +28,24 @@ Examples:
 		// Parse selector
 		selector := core.ParseSelector(args[0])
 
-		// Pin workspace
+		// Pin worktree
 		if err := engine.Pin(selector); err != nil {
 			handleError(err)
 		}
 
 		// Print success message
 		if !quiet {
-			printOutput(formatter.FormatSuccess("Workspace pinned successfully"))
+			printOutput(formatter.FormatSuccess("Worktree pinned successfully"))
 		}
 	},
 }
 
 var unpinCmd = &cobra.Command{
 	Use:   "unpin <selector>",
-	Short: "Unpin a workspace",
-	Long: `Remove the pin flag from a workspace.
+	Short: "Unpin a worktree",
+	Long: `Remove the pin flag from a worktree.
 
-This allows the workspace to be cleaned up by cleanup policies.
+This allows the worktree to be cleaned up by cleanup policies.
 
 Examples:
   yagwt unpin auth
@@ -62,14 +62,14 @@ Examples:
 		// Parse selector
 		selector := core.ParseSelector(args[0])
 
-		// Unpin workspace
+		// Unpin worktree
 		if err := engine.Unpin(selector); err != nil {
 			handleError(err)
 		}
 
 		// Print success message
 		if !quiet {
-			printOutput(formatter.FormatSuccess("Workspace unpinned successfully"))
+			printOutput(formatter.FormatSuccess("Worktree unpinned successfully"))
 		}
 	},
 }
