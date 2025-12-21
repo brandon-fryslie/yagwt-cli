@@ -198,12 +198,13 @@ func runMCP(cmd *cobra.Command, args []string) {
 	}
 
 	if !changed {
-		if mcpRemove {
-			// Use regular printOutput for informational message
-			printOutput("ℹ yagwt MCP configuration not found in .mcp.json\n")
-		} else {
-			// Use regular printOutput for informational message
-			printOutput("ℹ yagwt MCP configuration already exists in .mcp.json\n")
+		// Informational messages should only be shown in human mode without --quiet or --porcelain
+		if !quiet && !porcelain && !jsonOutput {
+			if mcpRemove {
+				printOutput("ℹ yagwt MCP configuration not found in .mcp.json\n")
+			} else {
+				printOutput("ℹ yagwt MCP configuration already exists in .mcp.json\n")
+			}
 		}
 		return
 	}

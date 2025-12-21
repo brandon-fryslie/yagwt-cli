@@ -258,6 +258,10 @@ func (f *humanFormatter) FormatVersion(version, commit, date string) string {
 }
 
 func (f *humanFormatter) FormatSuccess(message string) string {
+	// Don't output success messages when quiet flag is set
+	if f.quiet {
+		return ""
+	}
 	return message + "\n"
 }
 
