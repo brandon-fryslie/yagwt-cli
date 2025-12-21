@@ -45,3 +45,4 @@ testdata/repos/*/
 # Lock files (runtime)
 *.lock
 .agent_planning/do-command-logs
+mcp/yagwt-mcp

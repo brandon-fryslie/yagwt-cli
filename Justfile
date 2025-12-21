@@ -10,6 +10,12 @@ build:
     @mkdir -p bin
     go build -o bin/yagwt ./cmd/yagwt
 
+# Build MCP server
+build-mcp:
+    @echo "Building yagwt-mcp..."
+    @mkdir -p bin
+    cd mcp && go build -o ../bin/yagwt-mcp .
+
 # Build for all platforms (release builds)
 build-all:
     @echo "Building for all platforms..."
@@ -64,15 +70,16 @@ clean:
     go clean
 
 # Install binary to local system
-install: build
+install: build build-mcp
     @echo "Installing yagwt to /usr/local/bin..."
     sudo cp bin/yagwt /usr/local/bin/yagwt
+    sudo cp bin/yagwt-mcp /usr/local/bin/yagwt-mcp
     @echo "Installed successfully!"
 
 # Uninstall binary from local system
 uninstall:
     @echo "Uninstalling yagwt..."
-    sudo rm -f /usr/local/bin/yagwt
+    sudo rm -f /usr/local/bin/yagwt /usr/local/bin/yagwt-mcp
     @echo "Uninstalled successfully!"
 
 # Run all checks (lint, test, build)
