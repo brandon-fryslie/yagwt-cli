@@ -48,11 +48,22 @@ type InitializeResult struct {
 }
 
 type ServerCapabilities struct {
-	Tools *ToolsCapability `json:"tools,omitempty"`
+	Tools     *ToolsCapability     `json:"tools,omitempty"`
+	Prompts   *PromptsCapability   `json:"prompts,omitempty"`
+	Resources *ResourcesCapability `json:"resources,omitempty"`
 }
 
 type ToolsCapability struct {
 	ListChanged bool `json:"listChanged,omitempty"`
+}
+
+type PromptsCapability struct {
+	ListChanged bool `json:"listChanged,omitempty"`
+}
+
+type ResourcesCapability struct {
+	ListChanged bool `json:"listChanged,omitempty"`
+	Subscribe   bool `json:"subscribe,omitempty"`
 }
 
 type Tool struct {
@@ -89,6 +100,60 @@ type CallToolResult struct {
 type Content struct {
 	Type string `json:"type"`
 	Text string `json:"text"`
+}
+
+// Prompts
+type Prompt struct {
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Arguments   []PromptArg `json:"arguments,omitempty"`
+}
+
+type PromptArg struct {
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Required    bool       `json:"required"`
+}
+
+type PromptsListResult struct {
+	Prompts []Prompt `json:"prompts"`
+}
+
+type GetPromptResult struct {
+	Description string   `json:"description"`
+	Messages    []Message `json:"messages"`
+}
+
+type Message struct {
+	Role string `json:"role"`
+	Text Text   `json:"text"`
+}
+
+type Text struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+// Resources
+type Resource struct {
+	URI         string        `json:"uri"`
+	Name        string        `json:"name"`
+	Description string        `json:"description,omitempty"`
+	MimeType    string        `json:"mimeType,omitempty"`
+}
+
+type ResourcesListResult struct {
+	Resources []Resource `json:"resources"`
+}
+
+type ReadResourceResult struct {
+	Contents []ResourceContent `json:"contents"`
+}
+
+type ResourceContent struct {
+	URI     string `json:"uri"`
+	MimeType string `json:"mimeType"`
+	Text    string `json:"text,omitempty"`
 }
 
 // Server
@@ -141,7 +206,9 @@ func (s *Server) handleRequest(req *Request) {
 		s.sendResult(req.ID, InitializeResult{
 			ProtocolVersion: "2024-11-05",
 			Capabilities: ServerCapabilities{
-				Tools: &ToolsCapability{},
+				Tools:     &ToolsCapability{},
+				Prompts:   &PromptsCapability{},
+				Resources: &ResourcesCapability{},
 			},
 			ServerInfo: ServerInfo{
 				Name:    "yagwt-mcp",
@@ -164,6 +231,39 @@ func (s *Server) handleRequest(req *Request) {
 			return
 		}
 		result := s.callTool(params.Name, params.Arguments)
+		s.sendResult(req.ID, result)
+
+	case "prompts/list":
+		s.sendResult(req.ID, PromptsListResult{
+			Prompts: s.getPrompts(),
+		})
+
+	case "prompts/get":
+		var params struct {
+			Name string `json:"name"`
+			Arguments map[string]string `json:"arguments,omitempty"`
+		}
+		if err := json.Unmarshal(req.Params, &params); err != nil {
+			s.sendError(req.ID, -32602, "Invalid params")
+			return
+		}
+		result := s.getPrompt(params.Name, params.Arguments)
+		s.sendResult(req.ID, result)
+
+	case "resources/list":
+		s.sendResult(req.ID, ResourcesListResult{
+			Resources: s.getResources(),
+		})
+
+	case "resources/read":
+		var params struct {
+			URI string `json:"uri"`
+		}
+		if err := json.Unmarshal(req.Params, &params); err != nil {
+			s.sendError(req.ID, -32602, "Invalid params")
+			return
+		}
+		result := s.readResource(params.URI)
 		s.sendResult(req.ID, result)
 
 	default:
@@ -235,6 +335,246 @@ func (s *Server) getTools() []Tool {
 				Required: []string{"name"},
 			},
 		},
+	}
+}
+
+func (s *Server) getPrompts() []Prompt {
+	return []Prompt{
+		{
+			Name:        "parallel-work",
+			Description: "Set up parallel work by creating isolated worktrees for multiple features/tasks",
+			Arguments: []PromptArg{
+				{
+					Name:        "tasks",
+					Description: "List of tasks to work on in parallel (one per line, format: 'task_name: brief description')",
+					Required:    true,
+				},
+				{
+					Name:        "base",
+					Description: "Base branch to create all worktrees from",
+					Required:    false,
+				},
+			},
+		},
+		{
+			Name:        "feature-work",
+			Description: "Create a worktree for working on a new feature",
+			Arguments: []PromptArg{
+				{
+					Name:        "feature",
+					Description: "Name of the feature branch",
+					Required:    true,
+				},
+				{
+					Name:        "description",
+					Description: "Brief description of what needs to be implemented",
+					Required:    true,
+				},
+				{
+					Name:        "dependencies",
+					Description: "Any dependencies or prerequisites",
+					Required:    false,
+				},
+			},
+		},
+		{
+			Name:        "bug-fix",
+			Description: "Create a worktree for fixing a bug",
+			Arguments: []PromptArg{
+				{
+					Name:        "bug_id",
+					Description: "Bug ID or ticket number",
+					Required:    true,
+				},
+				{
+					Name:        "description",
+					Description: "Description of the bug and how to reproduce",
+					Required:    true,
+				},
+				{
+					Name:        "affected_files",
+					Description: "Files known to be affected by the bug",
+					Required:    false,
+				},
+			},
+		},
+	}
+}
+
+func (s *Server) getPrompt(name string, args map[string]string) GetPromptResult {
+	var prompt string
+
+	switch name {
+	case "parallel-work":
+		tasks := args["tasks"]
+		base := args["base"]
+		if base == "" {
+			base = "current branch"
+		}
+		prompt = fmt.Sprintf(`I need to work on multiple tasks in parallel. Here's what needs to be done:
+
+Tasks:
+%s
+
+Please:
+1. Create a worktree for each task using the worktree_create tool
+2. For each worktree, start a subagent to work on that task
+3. Each subagent should work in isolation in its worktree
+4. Report back when all tasks are complete or if any issues arise
+
+Base branch: %s
+
+Instructions for each subagent:
+- Work independently in your assigned worktree
+- Commit your work when done
+- Report completion status back to the main thread
+- Don't interfere with other parallel worktrees`, tasks, base)
+
+	case "feature-work":
+		feature := args["feature"]
+		description := args["description"]
+		dependencies := args["dependencies"]
+		prompt = fmt.Sprintf(`Working on feature: %s
+
+Description: %s
+
+Dependencies: %s
+
+Please:
+1. Create a new worktree for this feature (use the feature name as the branch)
+2. Implement the feature according to the description
+3. Add tests if applicable
+4. Commit the changes
+5. Provide a summary of what was implemented
+
+Make sure to work in isolation using the worktree management tools.`, feature, description, dependencies)
+
+	case "bug-fix":
+		bugID := args["bug_id"]
+		description := args["description"]
+		affectedFiles := args["affected_files"]
+		prompt = fmt.Sprintf(`Fixing bug: %s
+
+Description: %s
+
+Affected files: %s
+
+Please:
+1. Create a worktree for this bug fix (use bugfix-%s as the branch name)
+2. Reproduce the issue if possible
+3. Fix the bug
+4. Test the fix
+5. Commit the changes with a clear commit message referencing the bug ID
+6. Provide a summary of the fix
+
+Work in isolation using the worktree tools to avoid affecting other work.`, bugID, description, affectedFiles, bugID)
+
+	default:
+		prompt = "Unknown prompt: " + name
+	}
+
+	return GetPromptResult{
+		Description: "Worktree management prompt",
+		Messages: []Message{
+			{
+				Role: "user",
+				Text: Text{
+					Type: "text",
+					Text: prompt,
+				},
+			},
+		},
+	}
+}
+
+func (s *Server) getResources() []Resource {
+	return []Resource{
+		{
+			URI:         "worktree://list",
+			Name:        "Worktree List",
+			Description: "Current list of all worktrees and their status",
+			MimeType:    "text/plain",
+		},
+		{
+			URI:         "worktree://branches",
+			Name:        "Available Branches",
+			Description: "List of all available branches in the repository",
+			MimeType:    "text/plain",
+		},
+		{
+			URI:         "worktree://status",
+			Name:        "Repository Status",
+			Description: "Current git status and worktree states",
+			MimeType:    "text/plain",
+		},
+	}
+}
+
+func (s *Server) readResource(uri string) ReadResourceResult {
+	var content ResourceContent
+
+	switch uri {
+	case "worktree://list":
+		cmd := exec.Command("yagwt", "ls")
+		cmd.Dir = s.repoRoot
+		output, err := cmd.Output()
+		if err != nil {
+			output = []byte("Error listing worktrees: " + err.Error())
+		}
+		content = ResourceContent{
+			URI:      uri,
+			MimeType: "text/plain",
+			Text:     string(output),
+		}
+
+	case "worktree://branches":
+		cmd := exec.Command("git", "branch", "-a", "--format=%(refname:short)")
+		cmd.Dir = s.repoRoot
+		output, err := cmd.Output()
+		if err != nil {
+			output = []byte("Error listing branches: " + err.Error())
+		}
+		content = ResourceContent{
+			URI:      uri,
+			MimeType: "text/plain",
+			Text:     string(output),
+		}
+
+	case "worktree://status":
+		// Get git status of main repo
+		cmd := exec.Command("git", "status", "--porcelain")
+		cmd.Dir = s.repoRoot
+		output, err := cmd.Output()
+		status := string(output)
+		if err != nil {
+			status = "Error getting status: " + err.Error()
+		}
+
+		// Get current branch
+		cmd2 := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+		cmd2.Dir = s.repoRoot
+		output2, err2 := cmd2.Output()
+		currentBranch := "unknown"
+		if err2 == nil {
+			currentBranch = strings.TrimSpace(string(output2))
+		}
+
+		content = ResourceContent{
+			URI:      uri,
+			MimeType: "text/plain",
+			Text:     fmt.Sprintf("Current branch: %s\n\nGit status:\n%s", currentBranch, status),
+		}
+
+	default:
+		content = ResourceContent{
+			URI:      uri,
+			MimeType: "text/plain",
+			Text:     "Unknown resource: " + uri,
+		}
+	}
+
+	return ReadResourceResult{
+		Contents: []ResourceContent{content},
 	}
 }
 

@@ -12,7 +12,7 @@ build:
 
 # Build MCP server
 build-mcp:
-    @echo "Building yagwt-mcp..."
+    @echo "Building yagwt-mcp with prompts and resources..."
     @mkdir -p bin
     cd mcp && go build -o ../bin/yagwt-mcp .
 
