@@ -88,6 +88,7 @@ func init() {
 	rootCmd.AddCommand(unlockCmd)
 	rootCmd.AddCommand(cleanCmd)
 	rootCmd.AddCommand(doctorCmd)
+	rootCmd.AddCommand(mcpCmd)
 
 	// Store the default usage function before we override it
 	defaultUsageFunc = rootCmd.UsageFunc()
