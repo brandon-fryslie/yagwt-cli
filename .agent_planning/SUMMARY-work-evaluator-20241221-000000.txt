@@ -1,0 +1,8 @@
+Agent: work-evaluator | 2024-12-21-000000
+Scope: work/yagwt-mcp
+Verdict: INCOMPLETE
+Criteria: 11/12 working | Breaks found: 0 | Ambiguities: 2
+Previous issues: N/A (first evaluation)
+Missing checks: 2 specified
+Cache updated: runtime-mcp.md
+-> INCOMPLETE: Fix needed: Global flags (--quiet, --porcelain) should suppress informational messages

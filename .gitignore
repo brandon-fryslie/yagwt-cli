@@ -1,6 +1,7 @@
 # Binaries
 /bin/yagwt
 /bin/yagwtd
+yagwt
 *.exe
 *.exe~
 *.dll
@@ -46,3 +47,7 @@ testdata/repos/*/
 .agent_planning/do-command-logs
 mcp/yagwt-mcp
 /mcp/yagwt-mcp
+.agent_planning/eval-cache/
+bin/
+
+!yagwt/
