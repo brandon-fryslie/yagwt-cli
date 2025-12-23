@@ -1,0 +1,3 @@
+Agent: product-visionary | 20251219-015658
+Proposal: FEATURE_PROPOSAL_enhanced-workflows.md | Ideas: 12 brainstormed → 4 selected
+Theme: Workflow automation and intelligent context management | User Impact: high

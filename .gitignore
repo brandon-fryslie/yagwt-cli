@@ -1,0 +1,53 @@
+# Binaries
+/bin/yagwt
+/bin/yagwtd
+yagwt
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/dist/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.txt
+coverage.html
+
+# Go workspace file
+go.work
+
+# Dependency directories
+vendor/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment files
+.env
+.env.local
+
+# Build artifacts
+*.tar.gz
+*.zip
+
+# Test artifacts
+testdata/repos/*/
+
+# Lock files (runtime)
+*.lock
+.agent_planning/do-command-logs
+cmd/mcp/yagwt-mcp
+/cmd/mcp/yagwt-mcp
+.agent_planning/eval-cache/
+bin/
+
+!yagwt/
