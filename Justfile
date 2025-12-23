@@ -14,7 +14,7 @@ build:
 build-mcp:
     @echo "Building yagwt-mcp with prompts and resources..."
     @mkdir -p bin
-    cd mcp && go build -o ../bin/yagwt-mcp .
+    cd cmd/mcp && go build -o ../../bin/yagwt-mcp .
 
 # Build for all platforms (release builds)
 build-all:
